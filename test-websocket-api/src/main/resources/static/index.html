@@ -1,0 +1,66 @@
+<html>
+
+<head>
+<script>
+    var ws;
+    var ws2;
+    window.onload = (event)=>{
+	if (!window.WebSocket) {
+		alert("WebSocket is not supported");
+	} else {
+		ws = new WebSocket("ws://localhost:8080/trade");
+		ws.onopen = function() {
+			console.info("websocket trade is opened");
+		};
+		ws.onmessage = function(event) {
+			console.info(event);
+		};
+		
+		
+		ws2 = new WebSocket("ws://localhost:8080/quote");
+		ws2.onopen = function() {
+			console.info("websocket quote is opened");
+		};
+		ws2.onmessage = function(event) {
+			console.info("receive "+ event.data); 
+			document.getElementById("marketdata").innerText = event.data ;
+		};
+	}
+	
+    };
+    function sendMsg() {
+		var order = {
+			"symbol" : document.getElementById("symbol").value,
+			"price" : document.getElementById("price").value,
+			"quantity" : document.getElementById("quantity").value,
+			"direction" : document.querySelector('input[name="direction"]:checked').value,
+			"type" : "MARKET"
+			};
+		if(ws)ws.send(JSON.stringify(order));
+		else alert("trade websocket is not opened");
+	}
+</script>
+</head>
+<body>
+	<div>
+		<h2>Market Data</h2>
+		<div id="marketdata"></div>
+	</div>
+	<div style="width:30vw;">
+		<h2>Trade</h2>
+		<div style="display:grid;">
+		  <div style="display:grid;grid-template-columns:repeat(2, 50%)"> 
+		     <div>Direction: </div>
+		     <div> 
+		       <input type="radio" name="direction" id="direction" value="BUY" checked />BUY
+		       <input type="radio" name="direction" id="direction" value="SELL" />SELL
+		     </div>
+		  </div>
+		  <div style="display:grid;grid-template-columns:repeat(2, 50%)"> <div>Symbol:   </div><div> <input type="text" id="symbol" value="USDJPY"/>  </div></div>
+		  <div style="display:grid;grid-template-columns:repeat(2, 50%)"> <div>Price:    </div><div> <input type="text" id="price" value="10"/>    </div></div>
+		  <div style="display:grid;grid-template-columns:repeat(2, 50%)"> <div>Quantity: </div><div> <input type="text" id="quantity" value="1"/> </div></div>
+		  <div><input type="button" value="Send" onclick="sendMsg()" /> </div><div></div>
+		</div>
+	</div>
+</body>
+</html>

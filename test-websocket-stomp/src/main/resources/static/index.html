@@ -1,0 +1,127 @@
+<html>
+
+<head>
+<script
+	src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@5.0.0/bundles/stomp.umd.min.js"></script>
+<script>
+var stompClient;
+window.onload = (event)=>{
+        const stompConfig = {
+	      // Typically, login, passcode and vhost
+	      // Adjust these for your broker
+	      connectHeaders: {
+	       token: "I am a token"
+	      },
+
+	      // Broker URL, should start with ws:// or wss:// - adjust for your broker setup
+	      brokerURL: "ws://localhost:8080/websocket",
+
+	      // Keep it off for production, it can be quit verbose
+	      // Skip this key to disable
+	      debug: function (str) {
+	        console.log('STOMP: ' + str);
+	      },
+
+	      // If disconnected, it will retry after 200ms
+	      reconnectDelay: 200,
+
+	      // Subscriptions should be done inside onConnect as those need to reinstated when the broker reconnects
+	      onConnect: function (frame) {
+	        // The return object has a method called `unsubscribe`
+	        const subscription = stompClient.subscribe('/topic/quote', function (message) {
+	          const payload = JSON.parse(message.body);
+	          //displayIncomingMessage(payload.user, payload.usrMsg);
+	          console.log(payload);
+	          document.getElementById("marketdata").innerText = JSON.stringify(payload) ;
+	        });
+	        const getJob = stompClient.subscribe('/queue/job', function (message) {
+				  const payload = message.body;
+				  //displayIncomingMessage(payload.user, payload.usrMsg);
+				  console.log(payload);
+				  document.getElementById("job").innerHTML = JSON.stringify(payload);
+			});
+	        const tradeResponse = stompClient.subscribe('/user/queue/reply', function (message) {
+				  const payload = message.body;
+				  //displayIncomingMessage(payload.user, payload.usrMsg);
+				  console.log('tradeResponse', payload);
+				  document.getElementById("order").innerText = payload;
+			});
+	      }
+	    };
+
+	    // Create an instance
+	    stompClient = new StompJs.Client(stompConfig);
+	    stompClient.activate();
+}
+
+function sendMsg(){
+	if (stompClient && stompClient.connected) {
+	  var order = JSON.stringify({
+		"symbol": document.getElementById("symbol").value,
+		"buySell": document.querySelector('input[name="direction"]:checked').value,
+		"price": document.getElementById("price").value,
+		"quantity": document.getElementById("quantity").value
+	  })
+	  stompClient.publish({
+		  destination: ("/app/trade"),
+		  body: order
+		});
+	}else{
+	  console.log('stompClient is not connected')
+	}
+}
+</script>
+</head>
+<body>
+    <div>
+    <a href="https://stomp-js.github.io/guide/stompjs/using-stompjs-v5.html">StompJs Document</a>
+    </div>
+	<div>
+		<h2>Market Data</h2>
+		<div id="marketdata"></div>
+	</div>
+	<div>
+		<h2>Job</h2>
+		<div id="job"></div>
+	</div>
+	<div style="width: 30vw;">
+		<h2>Trade</h2>
+		<div style="display: grid;">
+			<div style="display: grid; grid-template-columns: repeat(2, 50%)">
+				<div>Direction:</div>
+				<div>
+					<input type="radio" name="direction" id="direction" value="Buy"
+						checked />BUY <input type="radio" name="direction" id="direction"
+						value="Sell" />SELL
+				</div>
+			</div>
+			<div style="display: grid; grid-template-columns: repeat(2, 50%)">
+				<div>Symbol:</div>
+				<div>
+					<input type="text" id="symbol" value="USDJPY" />
+				</div>
+			</div>
+			<div style="display: grid; grid-template-columns: repeat(2, 50%)">
+				<div>Price:</div>
+				<div>
+					<input type="text" id="price" value="10" />
+				</div>
+			</div>
+			<div style="display: grid; grid-template-columns: repeat(2, 50%)">
+				<div>Quantity:</div>
+				<div>
+					<input type="text" id="quantity" value="1" />
+				</div>
+			</div>
+			<div>
+				<input type="button" value="Send" onclick="sendMsg()" />
+			</div>
+			<div></div>
+		</div>
+		<div>
+		<h2>Order Sent</h2>
+		<div id="order"></div>
+	</div>
+	</div>
+</body>
+</html>

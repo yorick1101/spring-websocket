@@ -1,0 +1,13 @@
+spring:
+  rabbitmq:
+    addresses: localhost:6672,localhost:7672, localhost:8672
+    username: guest
+    password: guest
+  redis:
+    host: 10.30.10.21
+    port: 6379
+    
+    
+    
+    
+    
