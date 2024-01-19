@@ -1,0 +1,43 @@
+# localhost:5672	AMQP 0-9-1 and AMQP 1.0 clients
+# localhost:15672	HTTP API clients, management UI and rabbitmqadmin
+
+#management user/password guest / guest, 
+version: '3'
+
+
+x-bind: &config-volume
+  - type: bind
+    source: ./config/rabbitmq.conf
+    target: /etc/rabbitmq/rabbitmq.conf
+x-env: &erlang-cookie
+  - RABBITMQ_ERLANG_COOKIE=TGQGFUDDYLGOQQCUCRNW
+
+services:
+  rabbitmq1:
+    image: rabbitmq:3.12-management-alpine
+    hostname: rabbitmq1
+    ports: 
+    - 8080:15672
+    - 6672:5672
+    volumes: *config-volume
+    environment: *erlang-cookie
+    
+  rabbitmq2:
+    image: rabbitmq:3.12-management-alpine
+    hostname: rabbitmq2
+    ports: 
+    - 7672:5672
+    depends_on: 
+    - rabbitmq1
+    volumes: *config-volume
+    environment: *erlang-cookie
+    
+  rabbitmq3:
+    image: rabbitmq:3.12-management-alpine
+    hostname: rabbitmq3
+    ports: 
+    - 8672:5672
+    depends_on: 
+    - rabbitmq2
+    volumes: *config-volume
+    environment: *erlang-cookie
